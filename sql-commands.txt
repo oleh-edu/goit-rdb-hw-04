@@ -1,0 +1,190 @@
+1.a. Create a database and tables.
+CREATE DATABASE LibraryManagement;
+USE LibraryManagement;
+
+1.b.
+CREATE TABLE authors (
+    author_id INT AUTO_INCREMENT PRIMARY KEY,
+    author_name VARCHAR(255) NOT NULL
+);
+
+1.c.
+CREATE TABLE genres (
+    genre_id INT AUTO_INCREMENT PRIMARY KEY,
+    genre_name VARCHAR(255) NOT NULL
+);
+
+1.d.
+CREATE TABLE books (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    publication_year YEAR NOT NULL,
+    author_id INT,
+    genre_id INT,
+    FOREIGN KEY (author_id) REFERENCES authors(author_id),
+    FOREIGN KEY (genre_id) REFERENCES genres(genre_id)
+);
+
+1.e.
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL
+);
+
+1.f.
+CREATE TABLE borrowed_books (
+    borrow_id INT AUTO_INCREMENT PRIMARY KEY,
+    book_id INT,
+    user_id INT,
+    borrow_date DATE NOT NULL,
+    return_date DATE,
+    FOREIGN KEY (book_id) REFERENCES books(book_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+2. Adding test data.
+INSERT INTO authors (author_name) VALUES ('Ronen Bergman');
+
+INSERT INTO genres (genre_name) VALUES ('Non-fiction Investigative Journalism');
+
+INSERT INTO books (title, publication_year, author_id, genre_id) 
+VALUES ('Rise and Kill First: The Secret History of Israel\'s Targeted Assassinations', 2018, 1, 1);
+
+INSERT INTO users (username, email) VALUES ('john_doe', 'john.doe@example.com');
+
+INSERT INTO borrowed_books (book_id, user_id, borrow_date, return_date) 
+VALUES (1, 1, '2024-08-13', '2024-08-20');
+
+3. Merge all tables.
+SELECT 
+    orders.id AS order_id,
+    customers.name AS customer_name,
+    employees.first_name AS employee_first_name,
+    employees.last_name AS employee_last_name,
+    shippers.name AS shipper_name,
+    products.name AS product_name,
+    categories.name AS category_name,
+    suppliers.name AS supplier_name,
+    order_details.quantity,
+    orders.date
+FROM 
+    order_details
+INNER JOIN orders ON order_details.order_id = orders.id
+INNER JOIN customers ON orders.customer_id = customers.id
+INNER JOIN employees ON orders.employee_id = employees.employee_id
+INNER JOIN shippers ON orders.shipper_id = shippers.id
+INNER JOIN products ON order_details.product_id = products.id
+INNER JOIN categories ON products.category_id = categories.id
+INNER JOIN suppliers ON products.supplier_id = suppliers.id;
+
+4.1. Define the number of rows (COUNT).
+SELECT COUNT(*) AS total_rows
+FROM 
+    order_details
+INNER JOIN orders ON order_details.order_id = orders.id
+INNER JOIN customers ON orders.customer_id = customers.id
+INNER JOIN employees ON orders.employee_id = employees.employee_id
+INNER JOIN shippers ON orders.shipper_id = shippers.id
+INNER JOIN products ON order_details.product_id = products.id
+INNER JOIN categories ON products.category_id = categories.id
+INNER JOIN suppliers ON products.supplier_id = suppliers.id;
+
+4.2. Changing INNER statements to LEFT or RIGHT and the effect on the number of lines.
+SELECT COUNT(*) AS total_rows_with_left_join
+FROM 
+    order_details
+LEFT JOIN orders ON order_details.order_id = orders.id
+LEFT JOIN customers ON orders.customer_id = customers.id
+LEFT JOIN employees ON orders.employee_id = employees.employee_id
+LEFT JOIN shippers ON orders.shipper_id = shippers.id
+LEFT JOIN products ON order_details.product_id = products.id
+LEFT JOIN categories ON products.category_id = categories.id
+LEFT JOIN suppliers ON products.supplier_id = suppliers.id;
+
+Using LEFT JOIN instead of INNER JOIN increases the number of rows, 
+because it includes all the records from the left table (even if there are no corresponding records in the right table).
+Therefore, you may end up with rows where some columns are NULL.
+
+4.3. Selecting rows where employee_id > 3 and ≤ 10.
+SELECT 
+    orders.id AS order_id,
+    customers.name AS customer_name,
+    employees.first_name AS employee_first_name,
+    employees.last_name AS employee_last_name,
+    shippers.name AS shipper_name,
+    products.name AS product_name,
+    categories.name AS category_name,
+    suppliers.name AS supplier_name,
+    order_details.quantity,
+    orders.date
+FROM 
+    order_details
+INNER JOIN orders ON order_details.order_id = orders.id
+INNER JOIN customers ON orders.customer_id = customers.id
+INNER JOIN employees ON orders.employee_id = employees.employee_id
+INNER JOIN shippers ON orders.shipper_id = shippers.id
+INNER JOIN products ON order_details.product_id = products.id
+INNER JOIN categories ON products.category_id = categories.id
+INNER JOIN suppliers ON products.supplier_id = suppliers.id
+WHERE 
+    employees.employee_id > 3 AND employees.employee_id <= 10;
+
+4.4. Grouping by category name, counting the number of rows in a group, average product quantity.
+SELECT 
+    categories.name AS category_name,
+    COUNT(*) AS total_orders,
+    AVG(order_details.quantity) AS average_quantity
+FROM 
+    order_details
+INNER JOIN products ON order_details.product_id = products.id
+INNER JOIN categories ON products.category_id = categories.id
+GROUP BY 
+    categories.name;
+
+4.5. Filter rows where the average number of products is greater than 21.
+SELECT 
+    categories.name AS category_name,
+    COUNT(*) AS total_orders,
+    AVG(order_details.quantity) AS average_quantity
+FROM 
+    order_details
+INNER JOIN products ON order_details.product_id = products.id
+INNER JOIN categories ON products.category_id = categories.id
+GROUP BY 
+    categories.name
+HAVING 
+    AVG(order_details.quantity) > 21;
+
+4.6. Sort the rows in descending order of the number of rows.
+SELECT 
+    categories.name AS category_name,
+    COUNT(*) AS total_orders,
+    AVG(order_details.quantity) AS average_quantity
+FROM 
+    order_details
+INNER JOIN products ON order_details.product_id = products.id
+INNER JOIN categories ON products.category_id = categories.id
+GROUP BY 
+    categories.name
+HAVING 
+    AVG(order_details.quantity) > 21
+ORDER BY 
+    total_orders DESC;
+
+4.7. Print four lines with the first line omitted.
+SELECT 
+    categories.name AS category_name,
+    COUNT(*) AS total_orders,
+    AVG(order_details.quantity) AS average_quantity
+FROM 
+    order_details
+INNER JOIN products ON order_details.product_id = products.id
+INNER JOIN categories ON products.category_id = categories.id
+GROUP BY 
+    categories.name
+HAVING 
+    AVG(order_details.quantity) > 21
+ORDER BY 
+    total_orders DESC
+LIMIT 1, 4;
